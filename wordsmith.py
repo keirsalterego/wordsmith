@@ -1,6 +1,33 @@
 import argparse
 
 
+def case_transform(word: str) -> list[str]:
+    variations: list[str] = []
+
+    variations.append(word.lower())
+    variations.append(word.upper())
+    variations.append(word.capitalize())
+
+    return variations
+
+def leet_transform(word: str) -> str:
+    replacements: dict[str, str] = {
+        'a': '4',
+        'e': '7',
+        'i': '2',
+        'o': '9',
+        'u': '3'
+    }
+    leeted_word: str = ""
+
+    for char in word:
+        if char.lower() in replacements:
+            leeted_word += replacements[char.lower()]
+        else:
+            leeted_word += char
+        
+    return leeted_word
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="My custom target wordlist generator")
 
@@ -13,15 +40,14 @@ def main() -> None:
         help="Comma-separated base words (e.g. Yuvraj,Biswal,2005)",
     )
 
-    parse.add_argument(
-        "-m",
-        "--min",
+    parser.add_argument(
+        "-m", "--min",
         type=int,
         default=4,
         help="Minimum password length"
     )
 
-    parse.add_argument(
+    parser.add_argument(
         "-M",
         "--max",
         type=int,
@@ -29,7 +55,7 @@ def main() -> None:
         help="Maximum password length"
     )
 
-    parse.add_argument(
+    parser.add_argument(
         "-l",
         "--leet",
         action="store_true",
