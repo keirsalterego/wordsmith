@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordsmith — smart wordlist generator · KeroxLabs</title>
+  <meta name="description" content="Wordsmith is a Python-based, modular wordlist generator for authorized security testing — case transforms, a leet-speak engine, and length filtering, from a handful of base words. Part of the Kerox arsenal (L1)." />
+  <link rel="icon" href="./logo.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050403; --bg-elevated: #0a0907; --bg-panel: #0e0c09;
+      --ink: #f2e7cc; --text: #c9c0a8; --text-dim: #7d7560; --text-dimmer: #46413a;
+      --rule: #1c1915; --rule-bright: #2a2620;
+      --accent: #d33636; --accent-dim: #6a1717; --accent-bright: #ff4949;
+      --mono: "JetBrains Mono", "Courier New", monospace;
+      --serif: "Instrument Serif", "EB Garamond", Georgia, serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--mono);
+      -webkit-font-smoothing: antialiased; font-feature-settings: "ss01", "calt";
+      line-height: 1.7; font-size: 14px;
+    }
+    ::selection { background: var(--accent); color: #000; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-dim); }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    .display { font-family: var(--serif); font-style: italic; font-weight: 400; color: var(--ink); letter-spacing: -0.012em; line-height: 0.98; }
+    .roman { font-family: var(--serif); font-style: normal; color: var(--ink); letter-spacing: -0.005em; }
+    .accent { color: var(--accent-bright); }
+    .dim { color: var(--text-dim); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 0.75rem; font-size: 10px; letter-spacing: 0.34em; color: var(--text-dim); text-transform: uppercase; }
+    .eyebrow::before { content: ""; display: inline-block; width: 28px; height: 1px; background: var(--accent); }
+    .dash { border: 0; border-top: 1px dashed var(--rule-bright); }
+
+    /* nav */
+    header { position: sticky; top: 0; z-index: 50; background: rgba(5,4,3,0.85); backdrop-filter: blur(10px); border-bottom: 1px dashed var(--rule-bright); }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 26px; height: 26px; object-fit: cover; mix-blend-mode: screen; }
+    .brand b { font-size: 11px; font-weight: 700; letter-spacing: 0.34em; color: var(--ink); }
+    .nav nav { display: flex; gap: 28px; font-size: 10px; letter-spacing: 0.3em; }
+    .nav nav a { color: var(--text-dim); transition: color .2s; }
+    .nav nav a:hover { color: var(--accent-bright); }
+
+    /* hero */
+    .hero { padding: 72px 0 48px; }
+    .hero h1 { font-size: clamp(56px, 11vw, 120px); margin: 22px 0 0; }
+    .hero .sub { max-width: 60ch; margin-top: 26px; font-size: 15px; line-height: 1.85; color: var(--text); }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 30px; font-size: 10px; letter-spacing: 0.3em; color: var(--text-dim); }
+    .meta b { color: var(--ink); font-weight: 400; }
+    .cta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 34px; }
+    .btn { font-size: 10px; letter-spacing: 0.3em; padding: 13px 22px; border: 1px solid var(--accent); color: var(--ink); transition: all .2s; }
+    .btn.solid { background: var(--accent); color: #000; }
+    .btn:hover { background: var(--accent); color: #000; }
+    .btn.ghost { border-color: var(--rule-bright); }
+    .btn.ghost:hover { border-color: var(--accent); background: transparent; color: var(--accent-bright); }
+
+    section { padding: 56px 0; }
+    h2.sh { font-size: clamp(30px, 5vw, 46px); margin-top: 14px; }
+
+    /* terminal */
+    .term { border: 1px solid var(--rule); background: var(--bg-panel); font-size: 12.5px; line-height: 1.65; position: relative; overflow: hidden; }
+    .term .bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed var(--rule-bright); padding: 10px 16px; font-size: 9px; letter-spacing: 0.26em; color: var(--text-dimmer); }
+    .term .dots { display: flex; gap: 6px; align-items: center; }
+    .term .dots span { width: 8px; height: 8px; background: var(--text-dimmer); display: block; }
+    .term .dots span:first-child { background: var(--accent); }
+    .term pre { padding: 18px 18px; overflow-x: auto; font-family: var(--mono); color: var(--text); white-space: pre; }
+    .term pre .p { color: var(--accent); }
+    .term pre .c { color: var(--ink); }
+    .term pre .o { color: var(--accent-bright); }
+    .term pre .g { color: var(--text-dim); }
+
+    /* feature grid */
+    .grid { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+    @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .cell { background: var(--bg); padding: 26px 24px; }
+    .cell .k { font-size: 10px; letter-spacing: 0.26em; color: var(--accent); text-transform: uppercase; }
+    .cell .t { font-family: var(--serif); font-style: normal; color: var(--ink); font-size: 22px; margin-top: 8px; }
+    .cell p { margin-top: 8px; font-size: 13px; color: var(--text); }
+
+    /* table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    th, td { text-align: left; padding: 11px 12px; border-bottom: 1px dashed var(--rule); }
+    th { font-size: 9px; letter-spacing: 0.28em; color: var(--text-dim); text-transform: uppercase; }
+    td code, .ic { font-family: var(--mono); color: var(--accent-bright); }
+    td:first-child code { color: var(--ink); }
+
+    .lead { max-width: 68ch; font-size: 14px; line-height: 1.85; color: var(--text); }
+    .arch { margin-top: 20px; border: 1px solid var(--rule); background: var(--bg-elevated); padding: 16px; }
+    .arch img { width: 100%; display: block; }
+
+    .note { border-left: 2px solid var(--accent); background: #0a0303; padding: 16px 20px; font-size: 13px; max-width: 72ch; }
+    .note b { color: var(--accent); font-size: 10px; letter-spacing: 0.3em; margin-right: 10px; }
+
+    footer { border-top: 1px dashed var(--rule-bright); padding: 40px 0; margin-top: 24px; }
+    .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 10px; letter-spacing: 0.3em; color: var(--text-dimmer); }
+    .pipe { color: var(--rule-bright); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="https://keroxlabs.github.io/">
+        <img src="./logo.jpg" alt="KeroxLabs" />
+        <b>KEROX<span class="accent">LABS</span></b>
+      </a>
+      <nav>
+        <a href="https://keroxlabs.github.io/">← THE LAB</a>
+        <a href="https://keroxlabs.github.io/research#arsenal">ARSENAL</a>
+        <a href="https://github.com/keroxlabs/wordsmith">GITHUB ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap">
+        <span class="eyebrow">KEROX ARSENAL · L1 · WARM-UP UTILITIES</span>
+        <h1 class="display">Wordsmith.</h1>
+        <p class="sub">
+          A smart, modular CLI for generating <span class="accent">targeted</span> password
+          wordlists. Hand it a few base words — a name, a date, a pet — and it builds hundreds of
+          plausible permutations through case transforms, a leet-speak engine, and length
+          filtering. Pure Python standard library, no dependencies, runs anywhere there's a prompt.
+        </p>
+        <div class="meta">
+          <span>LEVEL <b>L1 · WARM-UP</b></span>
+          <span>LANG <b>PYTHON 3 · STDLIB ONLY</b></span>
+          <span>INTERFACE <b>TTY / CLI</b></span>
+          <span>STATUS <span class="accent">SHIPPING</span></span>
+        </div>
+        <div class="cta">
+          <a class="btn solid" href="#install">GET IT</a>
+          <a class="btn ghost" href="https://github.com/keroxlabs/wordsmith">SOURCE ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <hr class="dash" />
+
+    <!-- DEMO -->
+    <section>
+      <div class="wrap">
+        <span class="eyebrow">SEE IT RUN</span>
+        <h2 class="sh display">One line in, a wordlist out.</h2>
+        <div class="term" style="margin-top:26px">
+          <div class="bar">
+            <span class="dots"><span></span><span></span><span></span><span style="margin-left:10px;letter-spacing:.2em;color:var(--text-dim)">wordsmith · tty1</span></span>
+            <span class="accent">DEMO</span>
+          </div>
+<pre><span class="p">$</span> <span class="c">python wordsmith.py -w acme,falcon,2024 -l -m 4 -M 16</span>
+<span class="g">[*] base words loaded: ['acme', 'falcon', '2024']</span>
+acme
+ACME
+Acme
+<span class="o">4cm7</span>
+falcon
+FALCON
+Falcon
+<span class="o">f4lc9n</span>
+2024
+<span class="g"># case transforms + leet (a→4 e→7 i→2 o→9 u→3), length-bounded</span>
+</pre>
+        </div>
+      </div>
+    </section>
+
+    <hr class="dash" />
+
+    <!-- FEATURES -->
+    <section>
+      <div class="wrap">
+        <span class="eyebrow">WHAT IT DOES</span>
+        <h2 class="sh display">Built like a real pipeline.</h2>
+        <div class="grid" style="margin-top:26px">
+          <div class="cell">
+            <div class="k">Transformers</div>
+            <div class="t">Case &amp; leet engine</div>
+            <p>Generates lower / UPPER / Capitalised variants of every base word, then optionally swaps letters for look-alike digits (a→4, e→7, i→2, o→9, u→3).</p>
+          </div>
+          <div class="cell">
+            <div class="k">Combinators</div>
+            <div class="t">Word mixing <span class="dim" style="font-size:11px">· WIP</span></div>
+            <p>Intelligently combines base words and numbers with common separators (<code class="ic">-</code> <code class="ic">_</code> <code class="ic">.</code>) to mirror how people actually build passwords.</p>
+          </div>
+          <div class="cell">
+            <div class="k">Filters</div>
+            <div class="t">Length &amp; dedup</div>
+            <p>Drops duplicates and enforces <code class="ic">--min</code> / <code class="ic">--max</code> length bounds, so the list stays focused and fast to crack against.</p>
+          </div>
+          <div class="cell">
+            <div class="k">I/O engine</div>
+            <div class="t">Stdlib only</div>
+            <p>No <code class="ic">requirements.txt</code>, no virtualenv gymnastics. Clone, run, pipe the output straight into your cracker.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="dash" />
+
+    <!-- INSTALL + USAGE -->
+    <section id="install">
+      <div class="wrap">
+        <span class="eyebrow">INSTALL &amp; RUN</span>
+        <h2 class="sh display">Clone it. Run it.</h2>
+        <div class="term" style="margin-top:26px">
+          <div class="bar"><span class="dots"><span></span><span></span><span></span></span><span class="accent">SHELL</span></div>
+<pre><span class="g"># Python 3, standard library only — nothing to install</span>
+<span class="p">$</span> <span class="c">git clone https://github.com/keroxlabs/wordsmith.git</span>
+<span class="p">$</span> <span class="c">cd wordsmith</span>
+
+<span class="g"># basic — a few base words</span>
+<span class="p">$</span> <span class="c">python wordsmith.py -w yuvraj,biswal,2005</span>
+
+<span class="g"># advanced — leet on, bound length 8–16</span>
+<span class="p">$</span> <span class="c">python wordsmith.py -w yuvraj,biswal,2005 -l -m 8 -M 16</span>
+</pre>
+        </div>
+
+        <h3 class="roman" style="font-size:20px;margin-top:34px">Options</h3>
+        <table>
+          <thead><tr><th>Flag</th><th>Long</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr><td><code>-w</code></td><td><code>--words</code></td><td>Comma-separated base words</td><td class="dim">required</td></tr>
+            <tr><td><code>-m</code></td><td><code>--min</code></td><td>Minimum password length</td><td class="dim">4</td></tr>
+            <tr><td><code>-M</code></td><td><code>--max</code></td><td>Maximum password length</td><td class="dim">12</td></tr>
+            <tr><td><code>-l</code></td><td><code>--leet</code></td><td>Enable leet-speak transforms</td><td class="dim">false</td></tr>
+            <tr><td><code>-h</code></td><td><code>--help</code></td><td>Show help and exit</td><td class="dim">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <hr class="dash" />
+
+    <!-- ARCHITECTURE -->
+    <section>
+      <div class="wrap">
+        <span class="eyebrow">UNDER THE HOOD</span>
+        <h2 class="sh display">A modular data pipeline.</h2>
+        <p class="lead" style="margin-top:18px">
+          Wordsmith is built the way professional offensive tooling is: small stages, each doing one
+          thing. Strings flow through <b class="roman">transformers</b> (case, leet), into
+          <b class="roman">combinators</b> (mixing words and separators), through
+          <b class="roman">filters</b> (dedup + length), and out the <b class="roman">I/O engine</b> to disk.
+        </p>
+        <div class="arch"><img src="./wordsmith-arch.png" alt="Wordsmith architecture — transformers, combinators, filters, I/O engine" /></div>
+      </div>
+    </section>
+
+    <hr class="dash" />
+
+    <!-- ETHICS -->
+    <section>
+      <div class="wrap">
+        <div class="note">
+          <b>USE</b>
+          Wordsmith is for <strong>authorized</strong> security testing and research — your own
+          accounts, lab targets, and engagements you have written permission to run. Offense in the
+          service of defense, same as the rest of the Kerox arsenal.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <span>© 2026 KEROXLABS <span class="pipe">·</span> WORDSMITH <span class="pipe">·</span> MIT</span>
+      <span class="accent">OFFENSE IN THE SERVICE OF DEFENSE</span>
+    </div>
+  </footer>
+</body>
+</html>
