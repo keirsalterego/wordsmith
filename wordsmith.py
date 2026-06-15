@@ -28,6 +28,7 @@ def leet_transform(word: str) -> str:
         
     return leeted_word
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="My custom target wordlist generator")
 
@@ -67,10 +68,22 @@ def main() -> None:
 
     if args.words:
         # if the user passed a single string like "Yuvraj,biswal" we gonna neeed to split it by the comma to turn it into a python list
-        base_wordlist = args.words.split(",")
+        base_wordlist = [w.strip() for w in args.words.split(",") if w.strip()]
         print(f"[*] base words loaded: {base_wordlist}")
     else:
-        print("[!] No words provided. use -w to provide base words.")
+        parser.error("No words provided")
+    candidates = []
+    for word in base_wordlist:
+        variants = case_transform(word)
+        candidates.extend(variants)
+        if args.leet:
+            for v in variants:
+                candidates.append(leet_transform(v))
+                
+    candidates = [c for c in candidates if args.min <= len(c) <= args.max]
+
+    for candidate in candidates:
+        print(candidate)
 
 
 if __name__ == "__main__":
