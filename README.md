@@ -13,6 +13,8 @@ cd wordsmith
 
 No dependencies — uses only Python standard library.
 
+![wordsmith architecture](assets/wordsmith-arch.png)
+
 ## Usage
 
 ### Password mode
