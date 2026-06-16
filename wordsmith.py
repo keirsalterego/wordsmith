@@ -1,3 +1,5 @@
+import secrets
+import string
 import argparse
 
 
@@ -10,14 +12,10 @@ def case_transform(word: str) -> list[str]:
 
     return variations
 
+
+# leet_transform is deterministic
 def leet_transform(word: str) -> str:
-    replacements: dict[str, str] = {
-        'a': '4',
-        'e': '7',
-        'i': '2',
-        'o': '9',
-        'u': '3'
-    }
+    replacements: dict[str, str] = {"a": "4", "e": "3", "i": "1", "o": "0", "s": "5"}
     leeted_word: str = ""
 
     for char in word:
@@ -25,8 +23,27 @@ def leet_transform(word: str) -> str:
             leeted_word += replacements[char.lower()]
         else:
             leeted_word += char
-        
+
     return leeted_word
+
+
+def generate_password(length: int, charset: str) -> str:
+    pool = ""
+    if charset == "all":
+        pool = string.ascii_letters + string.digits + string.punctuation
+    elif charset == "lower":
+        pool = string.ascii_lowercase
+    elif charset == "upper":
+        pool = string.ascii_uppercase
+    elif charset == "digits":
+        pool = string.digits
+    elif charset == "symbols":
+        pool = string.punctuation
+    else:
+        raise ValueError(f"Unknown charset: {charset}")
+    if not pool:
+        raise ValueError("Empty charset - no characters to choose from")
+    return "".join(secrets.choice(pool) for _ in range(length))
 
 
 def main() -> None:
@@ -42,36 +59,57 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "-m", "--min",
-        type=int,
-        default=4,
-        help="Minimum password length"
+        "-m", "--min", type=int, default=4, help="Minimum password length"
     )
 
     parser.add_argument(
-        "-M",
-        "--max",
-        type=int,
-        default=12,
-        help="Maximum password length"
+        "-M", "--max", type=int, default=12, help="Maximum password length"
     )
 
     parser.add_argument(
-        "-l",
-        "--leet",
-        action="store_true",
-        help="Enable leet speak transformation"
+        "-l", "--leet", action="store_true", help="Enable leet speak transformation"
+    )
+
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="wordlist",
+        choices=["password", "wordlist"],
+        help="Generation mode: password or wordlist",
+    )
+
+    parser.add_argument(
+        "--length",
+        "-L",
+        type=int,
+        default=16,
+        help="password length (used in password mode)",
+    )
+
+    parser.add_argument(
+        "--charset",
+        type=str,
+        default="all",
+        choices=["all", "lower", "upper", "digits", "symbols"],
+        help="character set for password generation",
+    )
+    parser.add_argument(
+        "-o", "--output", type=str, help="Write the wordlist to file instead of stdout"
     )
 
     # parse the arguments that the user typed in the terminal
     args = parser.parse_args()
 
-    if args.words:
-        # if the user passed a single string like "Yuvraj,biswal" we gonna neeed to split it by the comma to turn it into a python list
-        base_wordlist = [w.strip() for w in args.words.split(",") if w.strip()]
-        print(f"[*] base words loaded: {base_wordlist}")
-    else:
+    if args.length < 1:
+        parser.error("Length must be atleast 1")
+    if args.mode == "password":
+        password = generate_password(args.length, args.charset)
+        print(password)
+        return
+
+    if not args.words:
         parser.error("No words provided")
+    base_wordlist = [w.strip() for w in args.words.split(",") if w.strip()]
     candidates = []
     for word in base_wordlist:
         variants = case_transform(word)
@@ -79,11 +117,17 @@ def main() -> None:
         if args.leet:
             for v in variants:
                 candidates.append(leet_transform(v))
-                
+
     candidates = [c for c in candidates if args.min <= len(c) <= args.max]
 
-    for candidate in candidates:
-        print(candidate)
+    if args.output:
+        with open(args.output, "w") as f:
+            for candidate in candidates:
+                f.write(candidate + "\n")
+        print(f"Wrote {len(candidates)} candidates to {args.output}")
+    else:
+        for candidate in candidates:
+            print(candidate)
 
 
 if __name__ == "__main__":
